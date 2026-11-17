@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101827">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Moja dochádzka</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#131e30;--muted:#9aabc2;--line:#26364d;--green:#20b879;--red:#e05b65;--blue:#4d8df7}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#101d31,#090f1b 65%);color:#f4f7fb;font:16px system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
+main{max-width:680px;margin:auto;padding:22px 15px 50px}.head{text-align:center;margin:8px 0 22px}.head h1{margin:0;font-size:27px}.head p{margin:5px;color:var(--muted)}
+.panel{background:rgba(19,30,48,.96);border:1px solid var(--line);border-radius:18px;padding:17px;margin:13px 0;box-shadow:0 12px 28px #0003}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{background:#0e1929;border:1px solid var(--line);border-radius:13px;padding:14px}.stat small{display:block;color:var(--muted)}.stat strong{display:block;font-size:25px;margin-top:4px}
+label{display:block;color:var(--muted);font-size:13px;margin:12px 0 6px}input{width:100%;padding:12px;border:1px solid var(--line);border-radius:11px;background:#0b1524;color:white;font:inherit}
+button{border:0;border-radius:12px;padding:13px 15px;font:600 15px system-ui;cursor:pointer;color:white;background:var(--blue)}button:disabled{opacity:.4;cursor:not-allowed}.green{background:var(--green);color:#052418}.red{background:var(--red)}.secondary{background:#263750}.wide{width:100%;margin-top:10px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px}.muted{color:var(--muted)}.tabs{display:flex;gap:7px;margin:14px 0}.tabs button{flex:1;background:#24344b}.tabs button.active{background:var(--blue)}
+.entry{padding:12px 0;border-bottom:1px solid var(--line)}.entry:last-child{border:0}.entry strong{display:block}.entry small{color:var(--muted)}.entry .amount{color:#67dda9;font-weight:700;text-align:right}
+.note{font-size:12px;line-height:1.5;color:var(--muted)}.status{padding:9px 12px;border-radius:10px;background:#123728;color:#8be3b8;margin-top:10px;display:none}
+@media(max-width:420px){main{padding:16px 11px}.head h1{font-size:24px}.stat strong{font-size:22px}}
+</style></head>
+<body><main>
+<header class="head"><h1>⏱ Moja dochádzka</h1><p>Jednoduchá evidencia pracovného času</p></header>
+<section class="panel">
+ <div class="grid">
+  <div class="stat"><small>Hodinová sadzba</small><strong id="rateView">28,00 €</strong></div>
+  <div class="stat"><small>Prestávka / deň</small><strong id="breakView">45 min</strong></div>
+ </div>
+ <div><label for="employee">Meno a priezvisko (pre účtovníctvo)</label><input id="employee" type="text" placeholder="Meno a priezvisko"></div>
+ <div class="grid">
+  <div><label for="rate">Tvoja hodinová sadzba (€)</label><input id="rate" type="number" min="0" step=".01" value="28"></div>
+  <div><label for="break">Prestávka (min)</label><input id="break" type="number" min="0" step="1" value="45"></div>
+ </div>
+ <button class="wide secondary" id="saveSettings">Uložiť nastavenia</button>
+</section>
+<section class="panel">
+ <h2 style="margin:0 0 8px">Pracovný deň</h2>
+ <label for="workDate">Dátum</label><input id="workDate" type="date">
+ <div class="grid">
+  <div><label for="start">Príchod</label><input id="start" type="time" value="07:00"></div>
+  <div><label for="end">Odchod</label><input id="end" type="time" value="15:30"></div>
+ </div>
+ <button class="wide green" id="clockIn">▶ ZAZNAMENAŤ PRÍCHOD</button>
+ <button class="wide red" id="clockOut" disabled>■ ZAZNAMENAŤ ODCHOD A ULOŽIŤ</button>
+ <div class="status" id="status"></div>
+ <p class="note">Prestávka sa odpočíta raz z každého uzavretého pracovného dňa. Pri nočnej zmene sa odchod po polnoci počíta ako nasledujúci deň.</p>
+</section>
+<section class="panel">
+ <div class="row"><h2 style="margin:0">Prehľad</h2><input id="periodDate" type="date" style="max-width:155px"></div>
+ <div class="tabs"><button class="active" data-tab="day">Deň</button><button data-tab="week">Týždeň</button><button data-tab="month">Mesiac</button></div>
+ <div class="grid">
+  <div class="stat"><small>Odpracované</small><strong id="hoursTotal">0,00 h</strong></div>
+  <div class="stat"><small>Zárobok</small><strong id="moneyTotal">0,00 €</strong></div>
+ </div>
+ <div class="row" style="margin:13px 0"><span class="muted">Počet pracovných dní</span><strong id="daysTotal">0</strong></div>
+ <div id="entries"><p class="muted">Zatiaľ bez záznamov.</p></div>
+ <button class="wide secondary" id="export">⬇ Mesačný výkaz pre účtovníčku (Excel / CSV)</button>
+ <button class="wide secondary" id="pdf">▤ Vytlačiť / uložiť mesačný prehľad ako PDF</button>
+</section>
+<p class="note">Súkromie: údaje sa ukladajú iba v tomto prehliadači a zariadení. Kolegovia používajú vlastné záznamy na svojich telefónoch. Zdieľaná databáza ani automatická synchronizácia medzi zariadeniami nie je súčasťou tejto jednoduchej verzie. Pravidelne exportuj zálohu CSV.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id), key='mojaDochadzka_v1';
+let data=JSON.parse(localStorage.getItem(key)||'{"records":[],"rate":28,"break":45,"open":null,"employee":""}');
+let tab='day';
+const today=()=>{let d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+$('workDate').value=today();$('periodDate').value=today();
+$('rate').value=data.rate;$('break').value=data.break;$('employee').value=data.employee||'';
+function save(){localStorage.setItem(key,JSON.stringify(data))}
+function mins(t){let [h,m]=t.split(':').map(Number);return h*60+m}
+function fmt(n){return n.toLocaleString('sk-SK',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function render(){
+ $('rateView').textContent=fmt(Number(data.rate))+' €';$('breakView').textContent=data.break+' min';
+ $('clockIn').disabled=!!data.open;$('clockOut').disabled=!data.open;
+ $('status').style.display=data.open?'block':'none';$('status').textContent=data.open?'Práca začala '+data.open.start+' · '+data.open.date:'';
+ let ref=$('periodDate').value||today(), start=ref, end=ref;
+ if(tab==='week'){let d=new Date(ref+'T12:00:00');d.setDate(d.getDate()-(d.getDay()+6)%7);start=d.toISOString().slice(0,10);d.setDate(d.getDate()+6);end=d.toISOString().slice(0,10)}
+ if(tab==='month'){start=ref.slice(0,7)+'-01';let d=new Date(ref.slice(0,7)+'-01T12:00:00');d.setMonth(d.getMonth()+1);d.setDate(0);end=d.toISOString().slice(0,10)}
+ let list=data.records.filter(r=>r.date>=start&&r.date<=end).sort((a,b)=>b.date.localeCompare(a.date));
+ let hrs=list.reduce((s,r)=>s+r.hours,0);
+ $('hoursTotal').textContent=fmt(hrs)+' h';$('moneyTotal').textContent=fmt(hrs*Number(data.rate))+' €';$('daysTotal').textContent=list.length;
+ $('entries').innerHTML=list.length?list.map(r=>`<div class="entry row"><div><strong>${r.date}</strong><small>${r.start} – ${r.end} · prestávka ${r.break} min</small></div><div class="row"><div class="amount">${fmt(r.hours)} h<br>${fmt(r.hours*Number(data.rate))} €</div><button class="secondary" data-del="${r.id}" style="padding:8px 10px;margin-left:8px">✕</button></div></div>`).join(''):'<p class="muted">Zatiaľ bez záznamov v tomto období.</p>';
+ document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{if(confirm('Vymazať tento záznam?')){data.records=data.records.filter(r=>r.id!==b.dataset.del);save();render()}});
+}
+$('saveSettings').onclick=()=>{let rate=Number($('rate').value),br=Number($('break').value);if(!Number.isFinite(rate)||rate<0||!Number.isInteger(br)||br<0){alert('Skontroluj sadzbu a prestávku.');return}data.rate=rate;data.break=br;data.employee=$('employee').value.trim();save();render()};
+$('clockIn').onclick=()=>{let d=$('workDate').value,s=$('start').value;if(!d||!s){alert('Vyplň dátum a čas príchodu.');return}data.open={date:d,start:s};save();render()};
+$('clockOut').onclick=()=>{let e=$('end').value;if(!e){alert('Vyplň čas odchodu.');return}let a=mins(data.open.start),b=mins(e);if(b<=a)b+=1440;let gross=b-a,net=Math.max(0,gross-Number(data.break));if(gross<=0){alert('Skontroluj čas odchodu.');return}let r={id:String(Date.now()),date:data.open.date,start:data.open.start,end:e,break:Number(data.break),hours:net/60};let idx=data.records.findIndex(x=>x.date===r.date);if(idx>=0){if(!confirm('Pre tento deň už záznam existuje. Nahradiť ho?'))return;data.records.splice(idx,1)}data.records.push(r);data.open=null;save();$('periodDate').value=r.date;tab='day';document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x.dataset.tab===tab));render()};
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));render()});
+$('periodDate').onchange=render;
+$('export').onclick=()=>{let ref=$('periodDate').value||today(),month=ref.slice(0,7);let list=data.records.filter(r=>r.date.startsWith(month)).sort((a,b)=>a.date.localeCompare(b.date));let rows=[['Mesačný výkaz dochádzky',month],['Meno a priezvisko',data.employee||''],['Hodinová sadzba (€)',fmt(Number(data.rate))],['Dátum','Príchod','Odchod','Prestávka (min)','Odpracované hodiny','Orientačný zárobok (€)'],...list.map(r=>[r.date,r.start,r.end,r.break,fmt(r.hours),fmt(r.hours*Number(data.rate))])];let hrs=list.reduce((s,r)=>s+r.hours,0);rows.push(['Spolu pracovných dní',list.length],['Spolu odpracované hodiny',fmt(hrs)],['Orientačný zárobok (€)',fmt(hrs*Number(data.rate))]);let csv='\ufeff'+rows.map(r=>r.map(x=>'"'+String(x).replaceAll('"','""')+'"').join(';')).join('\r\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='dochadzka_'+month+'.csv';a.click();URL.revokeObjectURL(a.href)};
+$('pdf').onclick=()=>{
+ let ref=$('periodDate').value||today(), month=ref.slice(0,7);
+ let list=data.records.filter(r=>r.date.startsWith(month)).sort((a,b)=>a.date.localeCompare(b.date));
+ let hrs=list.reduce((s,r)=>s+r.hours,0);
+ let w=window.open('','_blank');
+ if(!w){alert('Pre otvorenie PDF povoľ v prehliadači vyskakovacie okná.');return}
+ let rows=list.map(r=>`<tr><td>${r.date}</td><td>${r.start}</td><td>${r.end}</td><td>${r.break} min</td><td>${fmt(r.hours)} h</td><td>${fmt(r.hours*Number(data.rate))} €</td></tr>`).join('');
+ w.document.write(`<!doctype html><html lang="sk"><meta charset="utf-8"><title>Mesačný výkaz dochádzky ${month}</title><style>body{font:13px Arial;color:#111;padding:30px;max-width:1000px;margin:auto}h1{font-size:23px;margin-bottom:5px}.sub{color:#555;margin-top:0}.meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:20px 0}.meta div{padding:10px;border:1px solid #bbb}table{border-collapse:collapse;width:100%;margin-top:18px}th,td{border:1px solid #aaa;padding:7px;text-align:left}th{background:#eee}.sum{margin-top:18px;padding:14px;border:1px solid #aaa;font-size:15px;line-height:1.9}.muted{color:#555;font-size:11px;margin-top:20px}.sign{display:flex;gap:50px;margin-top:65px}.sign div{border-top:1px solid #333;padding-top:7px;flex:1;text-align:center}@media print{body{padding:12mm}}</style><h1>MESAČNÝ VÝKAZ DOCHÁDZKY</h1><p class="sub">Obdobie: ${month}</p><div class="meta"><div><b>Pracovník:</b><br>${escapeHtml(data.employee||'Neuvedené')}</div><div><b>Hodinová sadzba:</b><br>${fmt(Number(data.rate))} € / hod.</div><div><b>Odpočítaná prestávka:</b><br>${data.break} min za pracovný deň</div><div><b>Počet evidovaných dní:</b><br>${list.length}</div></div><table><thead><tr><th>Dátum</th><th>Príchod</th><th>Odchod</th><th>Prestávka</th><th>Odpracované hodiny</th><th>Orientačný zárobok</th></tr></thead><tbody>${rows||'<tr><td colspan="6">Bez záznamov</td></tr>'}</tbody></table><div class="sum"><b>Spolu odpracované:</b> ${fmt(hrs)} hod.<br><b>Orientačný zárobok:</b> ${fmt(hrs*Number(data.rate))} €</div><p class="muted">Tento výkaz je osobná evidencia pracovného času a informatívny výpočet podľa zadanej hodinovej sadzby. Nie je mzdovým listom ani daňovým dokladom; nezahŕňa príplatky, odvody, dane, náhrady ani iné zrážky. Údaje pred odovzdaním skontrolujte.</p><div class="sign"><div>Podpis pracovníka</div><div>Dátum a podpis / potvrdenie</div></div><script>window.onload=()=>window.print()<\/script></html>`);
+ w.document.close();
+};
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+render();
+if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{})); }
+</script></body></html>
